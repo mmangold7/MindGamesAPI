@@ -14,6 +14,8 @@ namespace MindGamesApi
     {
         public static void Main(string[] args)
         {
+            PythonEngine.Initialize();
+            PythonEngine.BeginAllowThreads();
             CreateHostBuilder(args).Build().Run();
         }
 

@@ -31,6 +31,7 @@ namespace MindGamesApi
             services.AddSignalR(o =>
             {
                 o.EnableDetailedErrors = true;
+                o.MaximumReceiveMessageSize = 131072; // bytes
             });
 
         }
