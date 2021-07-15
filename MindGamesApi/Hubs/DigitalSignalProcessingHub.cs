@@ -11,19 +11,20 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace MindGamesApi.Hubs
 {
     public class DigitalSignalProcessingHub : Hub
     {
-        public async Task<CwtResult> ContinuousWaveletTransform(List<ChannelDataPacket> singleChannelData, bool recordData = false, string dataLabel = "")
+        public async Task<CwtResult> ContinuousWaveletTransformSingleChannel(List<ChannelDataPacket> singleChannelData, bool recordData = false, string dataLabel = "")
         {
             double[][] data;
             bool alphaPrediction = false;
 
             using (Py.GIL())
             {
-                data = PythonMathHelper.DoCWT(singleChannelData);
+                data = PythonMathHelper.DoSingleCWT(singleChannelData);
 
                 alphaPrediction = PythonMathHelper.DoRandomForestClassification(data);
 
@@ -42,47 +43,51 @@ namespace MindGamesApi.Hubs
                 }
             }
 
-            if (recordData)
+            return new CwtResult() { TransformedData = data, MlPrediction = alphaPrediction };
+        }
+
+        public async Task<List<CwtResult>> ContinuousWaveletTransformMultiChannel(List<List<ChannelDataPacket>> channelsData)
+        {
+            //channelsData = new List<List<ChannelDataPacket>>();
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            List<CwtResult> channelResults = new List<CwtResult>();
+
+            using (Py.GIL())
             {
-                var fileName = $"CWT_DATA_{dataLabel}";
-                var filePath = $"C:\\Users\\mmang\\Desktop\\cwt data\\{fileName}.csv";
+                var channelsCwtResult = PythonMathHelper.DoMultiCWT(channelsData);
 
-                var record = new ExpandoObject() as IDictionary<string, Object>;
-
-                var flattenedData = data.SelectMany(a => a).ToArray();
-
-                for (int i = 0; i < flattenedData.Length; i++)
+                foreach (var channelResult in channelsCwtResult)
                 {
-                    record.Add(i.ToString(), flattenedData[i]);
-                }
+                    //var alphaPrediction = PythonMathHelper.DoRandomForestClassification(channelResult);
 
-                if (File.Exists(filePath))
-                {
-                    var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                    var maxValue = PythonMathHelper.GetMaxArrayValue(channelResult);
+                    var minValue = PythonMathHelper.GetMinArrayValue(channelResult);
+                    var absoluteMaxValue = Math.Max(maxValue, Math.Abs(minValue));
+
+                    var scaleFactor = 255d / absoluteMaxValue;
+
+
+                    for (var i = 0; i < channelResult.Length; i++)
                     {
-                        // Don't write the header again.
-                        HasHeaderRecord = false,
-                    };
-                    using (var stream = File.Open(filePath, FileMode.Append))
-                    using (var writer = new StreamWriter(stream))
-                    using (var csv = new CsvWriter(writer, config))
-                    {
-                        csv.WriteRecord(record);
-                        csv.NextRecord();
+                        for (var j = 0; j < channelResult[0].Length; j++)
+                        {
+                            channelResult[i][j] *= scaleFactor;
+                        }
                     }
-                }
-                else
-                {
-                    using (var writer = new StreamWriter(filePath))
-                    using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-                    {
-                        csv.WriteRecord(record);
-                        csv.NextRecord();
-                    }
+
+                    channelResults.Add(new CwtResult() { TransformedData = channelResult });
                 }
             }
 
-            return new CwtResult() { TransformedData = data, MlPrediction = alphaPrediction };
+            //await Task.Delay(125);
+
+            stopwatch.Stop();
+            Debug.WriteLine($"milliseconds for cwt multi: {stopwatch.ElapsedMilliseconds}");
+
+            return channelResults;
         }
 
         public async Task<CwtResult> CwtCollect(CwtInput cwtInput)
@@ -141,7 +146,7 @@ namespace MindGamesApi.Hubs
 
                 var fileName = $"CWT_DATA_channel_{datas.IndexOf(data)}_{cwtInput.DataLabel}";
                 //var fileName = $"CWT_DATA_{cwtInput.DataLabel}";
-                var filePath = $"C:\\Users\\mmang\\Desktop\\cwt data\\{fileName}.csv";
+                var filePath = $"C:\\Users\\mmang\\source\\repos\\MindGamesApi\\MindGamesApi\\EEG Data\\cwt data\\{fileName}.csv";
 
                 var record = new ExpandoObject() as IDictionary<string, Object>;
 

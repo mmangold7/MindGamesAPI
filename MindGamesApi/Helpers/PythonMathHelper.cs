@@ -1,8 +1,8 @@
-﻿using MindGamesApi.Models;
-using Python.Runtime;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using MindGamesApi.Models;
+using Python.Runtime;
 
 namespace MindGamesApi.Helpers
 {
@@ -38,7 +38,7 @@ namespace MindGamesApi.Helpers
             return result;
         }
 
-        public static double[][] DoCWT(List<ChannelDataPacket> channelData)
+        public static double[][] DoSingleCWT(List<ChannelDataPacket> channelData)
         {
             dynamic signal = Py.Import("scipy.signal");
             dynamic np = Py.Import("numpy");
@@ -55,6 +55,33 @@ namespace MindGamesApi.Helpers
             else
             {
                 return new double[256][];
+            }
+        }
+
+        public static List<double[][]> DoMultiCWT(List<List<ChannelDataPacket>> channelData)
+        {
+            dynamic signal = Py.Import("scipy.signal");
+            dynamic np = Py.Import("numpy");
+
+            if (channelData != null && channelData.Any() && channelData.First() != null && channelData.First().Any())
+            {
+                List<double[][]> channelResults = new List<double[][]>();
+
+                foreach (var channel in channelData)
+                {
+                    var sig = channel.Select(cd => cd.Volts).ToArray();
+                    dynamic npsig = np.fromiter(sig, np.@float);
+                    dynamic widths = np.linspace(1.0, 15.0, 100); //good idea
+                    dynamic cwtmatr = signal.cwt(npsig, signal.ricker, widths);
+                    var result = (double[][])cwtmatr;
+                    channelResults.Add(result);
+                }
+
+                return channelResults;
+            }
+            else
+            {
+                return new List<double[][]>();
             }
         }
 
