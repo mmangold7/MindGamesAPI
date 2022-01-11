@@ -46,9 +46,11 @@ namespace MindGamesApi.Hubs
             return new CwtResult() { TransformedData = data, MlPrediction = alphaPrediction };
         }
 
-        public async Task<List<CwtResult>> ContinuousWaveletTransformMultiChannel(List<List<ChannelDataPacket>> channelsData)
+        public async Task<PredictionResult> ContinuousWaveletTransformMultiChannel(List<List<ChannelDataPacket>> channelsData, bool returnData)
         {
             //channelsData = new List<List<ChannelDataPacket>>();
+
+            var result = new PredictionResult();
 
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -58,36 +60,117 @@ namespace MindGamesApi.Hubs
             using (Py.GIL())
             {
                 var channelsCwtResult = PythonMathHelper.DoMultiCWT(channelsData);
+                var flattenedChannelData = new List<double>();
 
                 foreach (var channelResult in channelsCwtResult)
                 {
-                    //var alphaPrediction = PythonMathHelper.DoRandomForestClassification(channelResult);
+                    var semiFlattenedChannelData = channelResult.SelectMany(d => d);
 
-                    var maxValue = PythonMathHelper.GetMaxArrayValue(channelResult);
-                    var minValue = PythonMathHelper.GetMinArrayValue(channelResult);
-                    var absoluteMaxValue = Math.Max(maxValue, Math.Abs(minValue));
-
-                    var scaleFactor = 255d / absoluteMaxValue;
-
-
-                    for (var i = 0; i < channelResult.Length; i++)
-                    {
-                        for (var j = 0; j < channelResult[0].Length; j++)
-                        {
-                            channelResult[i][j] *= scaleFactor;
-                        }
-                    }
-
-                    channelResults.Add(new CwtResult() { TransformedData = channelResult });
+                    flattenedChannelData.AddRange(semiFlattenedChannelData);
                 }
+
+                result.EyesClosedPrediction = PythonMathHelper.DoEyesClosedClassificationCWT(flattenedChannelData.ToArray());
+
+                if (returnData)
+                    foreach (var channelResult in channelsCwtResult)
+                    {
+                        //var alphaPrediction = PythonMathHelper.DoRandomForestClassification(channelResult);
+
+                        var maxValue = PythonMathHelper.GetMaxArrayValue(channelResult);
+                        var minValue = PythonMathHelper.GetMinArrayValue(channelResult);
+                        var absoluteMaxValue = Math.Max(maxValue, Math.Abs(minValue));
+
+                        var scaleFactor = 255d / absoluteMaxValue;
+
+
+                        for (var i = 0; i < channelResult.Length; i++)
+                        {
+                            for (var j = 0; j < channelResult[0].Length; j++)
+                            {
+                                channelResult[i][j] *= scaleFactor;
+                            }
+                        }
+
+                        channelResults.Add(new CwtResult() { TransformedData = channelResult });
+                    }
             }
 
-            //await Task.Delay(125);
+            if (returnData)
+            {
+                result.CwtResults = channelResults;
+            }
+            else
+            {
+                result.CwtResults = new List<CwtResult>();
+            }
 
             stopwatch.Stop();
             Debug.WriteLine($"milliseconds for cwt multi: {stopwatch.ElapsedMilliseconds}");
 
-            return channelResults;
+            return result;
+
+        }
+
+        public async Task<PredictionResult> FFTMultiChannel(List<List<ChannelDataPacket>> channelsData)
+        {
+            //channelsData = new List<List<ChannelDataPacket>>();
+
+            var flattenedChannelsData = new List<double>();
+
+            foreach (var channelData in channelsData)
+            {
+                flattenedChannelsData.AddRange(channelData.Select(cd => Math.Abs(cd.Volts)));
+            }
+
+            var absoluteMaximum = flattenedChannelsData.Max();
+
+            var scaledChannelsData = new List<List<ChannelDataPacket>>
+            {
+                new List<ChannelDataPacket>(),
+                new List<ChannelDataPacket>(),
+                new List<ChannelDataPacket>(),
+                new List<ChannelDataPacket>(),
+                new List<ChannelDataPacket>(),
+                new List<ChannelDataPacket>(),
+                new List<ChannelDataPacket>(),
+                new List<ChannelDataPacket>()
+            };
+            foreach (var channel in channelsData)
+            {
+                var channelIndex = channelsData.IndexOf(channel);
+                scaledChannelsData[channelIndex] = channel
+                    .Select(c =>
+                        new ChannelDataPacket
+                        {
+                            Volts = c.Volts / absoluteMaximum,
+                            TimeStamp = c.TimeStamp
+                        }).ToList();
+            }
+
+            var result = new PredictionResult();
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+
+
+            //using (Py.GIL())
+            //{
+                var channelsCwtResult = PythonMathHelper.DoFFT(scaledChannelsData);
+                var flattenedChannelData = new List<double>();
+
+                foreach (var channelResult in channelsCwtResult)
+                {
+                    flattenedChannelData.AddRange(channelResult);
+                }
+
+                result.EyesClosedPrediction = PythonMathHelper.DoEyesClosedClassificationFFT(flattenedChannelData.ToArray());
+            //}
+
+            stopwatch.Stop();
+            Debug.WriteLine($"milliseconds for fft multi: {stopwatch.ElapsedMilliseconds}. result: {result.EyesClosedPrediction.EyesClosedProbability} and {result.EyesClosedPrediction.EyesOpenProbability}");
+
+            return result;
         }
 
         public async Task<CwtResult> CwtCollect(CwtInput cwtInput)
@@ -186,7 +269,7 @@ namespace MindGamesApi.Hubs
             return new CwtResult() { TransformedData = transformedData, MlPrediction = alphaPrediction };
         }
 
-        public async Task<double[][]> FastFourierTransform(double[][] allChannelData)
+        public async Task<double[][]> FastFourierTransform(List<List<ChannelDataPacket>> allChannelData)
         {
             using (Py.GIL())
             {

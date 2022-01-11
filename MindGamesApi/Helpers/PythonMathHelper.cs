@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using MindGamesApi.Models;
 using Python.Runtime;
 
@@ -8,36 +10,6 @@ namespace MindGamesApi.Helpers
 {
     public static class PythonMathHelper
     {
-        public static double[][] DoFFT(double[][] allChannelData)
-        {
-            dynamic fft = Py.Import("scipy.fft");
-            dynamic np = Py.Import("numpy");
-
-            var result = new double[8][];
-
-            if (allChannelData != null && allChannelData.First().Any())
-            {
-                var i = 0;
-                foreach (var channelData in allChannelData)
-                {
-                    dynamic npsig = np.fromiter(channelData, np.@float);
-                    dynamic fftResult = fft.fft(npsig);
-                    Complex[] complexFft = new Complex[channelData.Length];
-                    int j = 0;
-                    foreach (var complex in fftResult)
-                    {
-                        var parsedComplex = (double)complex;
-                        complexFft[j] = new Complex(parsedComplex, 0);
-                        j++;
-                    }
-                    result[i] = complexFft.Select(c => c.Real).ToArray();
-                    i++;
-                }
-            }
-
-            return result;
-        }
-
         public static double[][] DoSingleCWT(List<ChannelDataPacket> channelData)
         {
             dynamic signal = Py.Import("scipy.signal");
@@ -71,7 +43,7 @@ namespace MindGamesApi.Helpers
                 {
                     var sig = channel.Select(cd => cd.Volts).ToArray();
                     dynamic npsig = np.fromiter(sig, np.@float);
-                    dynamic widths = np.linspace(1.0, 15.0, 100); //good idea
+                    dynamic widths = np.linspace(1.0, 15.0, 50); //good idea
                     dynamic cwtmatr = signal.cwt(npsig, signal.ricker, widths);
                     var result = (double[][])cwtmatr;
                     channelResults.Add(result);
@@ -82,6 +54,61 @@ namespace MindGamesApi.Helpers
             else
             {
                 return new List<double[][]>();
+            }
+        }
+
+        public static double[][] DoFFT(List<List<ChannelDataPacket>> allChannelData)
+        {
+            using (Py.GIL())
+            {
+                dynamic fft = Py.Import("numpy.fft");
+                dynamic np = Py.Import("numpy");
+
+                if (allChannelData != null && allChannelData.First().Any())
+                {
+                    var result = new double[8][];
+                    result[0] = new double[251];
+                    result[1] = new double[251];
+                    result[2] = new double[251];
+                    result[3] = new double[251];
+                    result[4] = new double[251];
+                    result[5] = new double[251];
+                    result[6] = new double[251];
+                    result[7] = new double[251];
+                    foreach (var r in result)
+                    {
+                        for (var it = 0; it < 251; it++)
+                        {
+                            r[it] = 0;
+                        }
+                    }
+
+                    var i = 0;
+                    foreach (var channelData in allChannelData)
+                    {
+                        var sig = channelData.Select(cd => cd.Volts);
+                        dynamic npsig = np.fromiter(sig, np.@float);
+
+                        dynamic fftResult = fft.rfft(npsig);
+                        double[] realFft = new double[251];
+
+                        int j = 0;
+                        foreach (var complex in fftResult)
+                        {
+                            var parsedReal = (double)np.real(complex);
+                            realFft[j] = Math.Abs(parsedReal);
+                            j++;
+                        }
+                        result[i] = realFft.ToArray();
+                        i++;
+                    }
+
+                    return result;
+                }
+                else
+                {
+                    return new double[8][];
+                }
             }
         }
 
@@ -138,6 +165,56 @@ namespace MindGamesApi.Helpers
             bool prediction = RandomForestClassifier.predict(dataFrame);
 
             return prediction;
+        }
+
+        public static EyesClosedPrediction DoEyesClosedClassificationCWT(double[] data)
+        {
+            dynamic pd = Py.Import("pandas");
+            dynamic joblib = Py.Import("joblib");
+
+            dynamic RandomForestClassifier = joblib.load("real_eyes_closed_detector_8_2_21.pkl");
+
+            dynamic dataFrame = pd.DataFrame(data).transpose();
+
+            dynamic prediction = RandomForestClassifier.predict_proba(dataFrame);
+
+            var eyesOpenProbability = (double)(prediction[0][0]);
+            var eyesClosedProbability = (double)(prediction[0][1]);
+
+            var decimalEyesOpenProbability = Convert.ToDecimal(eyesOpenProbability);
+            var decimalEyesClosedProbability = Convert.ToDecimal(eyesClosedProbability);
+
+            return new EyesClosedPrediction() {
+                EyesOpenProbability = decimalEyesOpenProbability,
+                EyesClosedProbability = decimalEyesClosedProbability
+            };
+        }
+
+        public static EyesClosedPrediction DoEyesClosedClassificationFFT(double[] data)
+        {
+            using (Py.GIL())
+            {
+                dynamic pd = Py.Import("pandas");
+                dynamic joblib = Py.Import("joblib");
+
+                dynamic RandomForestClassifier = joblib.load("forest_clf_jason_eyes_closed_12-18-21.pkl");
+
+                dynamic dataFrame = pd.DataFrame(data).transpose();
+
+                dynamic prediction = RandomForestClassifier.predict_proba(dataFrame);
+
+                var eyesOpenProbability = (double)(prediction[0][0]);
+                var eyesClosedProbability = (double)(prediction[0][1]);
+
+                var decimalEyesOpenProbability = Convert.ToDecimal(eyesOpenProbability);
+                var decimalEyesClosedProbability = Convert.ToDecimal(eyesClosedProbability);
+
+                return new EyesClosedPrediction()
+                {
+                    EyesOpenProbability = decimalEyesOpenProbability,
+                    EyesClosedProbability = decimalEyesClosedProbability
+                };
+            }
         }
 
         public static List<double[][]> DoAllCWT(CwtInput cwtInput)

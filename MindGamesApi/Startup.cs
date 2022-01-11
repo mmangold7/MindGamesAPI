@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -17,9 +18,28 @@ namespace MindGamesApi
 {
     public class Startup
     {
+        private static string pythonPath1 = @"C:\Users\mmang\AppData\Local\Programs\Python\Python37";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+            string pathToPython = pythonPath1;
+            string path = pathToPython + ";" +
+                          Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine);
+            Environment.SetEnvironmentVariable("PATH", path, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("PYTHONHOME", pathToPython, EnvironmentVariableTarget.Process);
+
+            //var lib = new[]
+            //{
+            //    @"C:\Users\mmang\<your python code is here>",
+            //    Path.Combine(pathToPython, "Lib"),
+            //    Path.Combine(pathToPython, "DLLs")
+
+            //};
+            //string paths = string.Join("; ", lib);
+            //Environment.SetEnvironmentVariable("PYTHONPATH", paths, EnvironmentVariableTarget.Process);
+
         }
 
         public IConfiguration Configuration { get; }
@@ -31,7 +51,8 @@ namespace MindGamesApi
             services.AddSignalR(o =>
             {
                 o.EnableDetailedErrors = true;
-                o.MaximumReceiveMessageSize = 131072; // bytes
+                o.MaximumReceiveMessageSize = 9999999; // bytes
+                //o.s
             });
 
         }
