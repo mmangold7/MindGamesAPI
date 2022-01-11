@@ -113,7 +113,7 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
     {
         var dataProcessPipeline = this.MlContext
                                       .Transforms.Conversion.MapValueToKey(
-                                           inputColumnName: nameof(ChannelsDataPacketFlattenedLabeled.Condition),
+                                           inputColumnName: nameof(ChannelsDataPacketFlattenedLabeled.Label),
                                            outputColumnName: "Label"
                                        )
                                       .Append(

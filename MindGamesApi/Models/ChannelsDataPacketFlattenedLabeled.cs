@@ -18,7 +18,7 @@ public class ChannelsDataPacketFlattenedLabeled
 
     public float Channel8Volts { get; set; }
 
-    public float Condition { get; set; }
+    public string Label { get; set; }
 
     public long TimeStamp { get; set; }
 }

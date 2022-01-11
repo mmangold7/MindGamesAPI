@@ -5,5 +5,5 @@
 /// </summary>
 public class EyesClosedPrediction
 {
-    public float PredictedLabel { get; set; }
+    public string PredictedLabel { get; set; }
 }
