@@ -1,32 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using MindGamesApi.Hubs;
 
 namespace MindGamesApi
 {
     public class Startup
     {
-        private static string pythonPath1 = @"C:\Users\mmang\AppData\Local\Programs\Python\Python37";
+        private static readonly string pythonPath1 = @"C:\Users\mmang\AppData\Local\Programs\Python\Python37";
+
+        public IConfiguration Configuration { get; }
 
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            this.Configuration = configuration;
 
-            string pathToPython = pythonPath1;
-            string path = pathToPython + ";" +
-                          Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine);
+            var pathToPython = pythonPath1;
+            var path = pathToPython +
+                       ";" +
+                       Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine);
             Environment.SetEnvironmentVariable("PATH", path, EnvironmentVariableTarget.Process);
             Environment.SetEnvironmentVariable("PYTHONHOME", pathToPython, EnvironmentVariableTarget.Process);
 
@@ -39,22 +34,6 @@ namespace MindGamesApi
             //};
             //string paths = string.Join("; ", lib);
             //Environment.SetEnvironmentVariable("PYTHONPATH", paths, EnvironmentVariableTarget.Process);
-
-        }
-
-        public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
-            services.AddSignalR(o =>
-            {
-                o.EnableDetailedErrors = true;
-                o.MaximumReceiveMessageSize = 9999999; // bytes
-                //o.s
-            });
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,16 +52,29 @@ namespace MindGamesApi
 
             //ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-                //endpoints.MapHub<DigitalSignalProcessingHub>("/dsphub");
-            });
+            app.UseEndpoints(
+                endpoints =>
+                {
+                    endpoints.MapControllers();
+                    //endpoints.MapHub<DigitalSignalProcessingHub>("/dsphub");
+                }
+            );
 
-            app.UseSignalR(routes =>
-            {
-                routes.MapHub<DigitalSignalProcessingHub>("/dsphub");
-            });
+            app.UseSignalR(routes => { routes.MapHub<DigitalSignalProcessingHub>("/dsphub"); });
+        }
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddControllers();
+            services.AddSignalR(
+                o =>
+                {
+                    o.EnableDetailedErrors = true;
+                    o.MaximumReceiveMessageSize = 9999999; // bytes
+                    //o.s
+                }
+            );
         }
     }
 }
