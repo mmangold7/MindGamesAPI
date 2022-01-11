@@ -68,9 +68,9 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
         return this.MlContext.MulticlassClassification.Evaluate(testSetTransform);
     }
 
-    public void Fit(List<ChannelsDataPacket> conditionTrueData, List<ChannelsDataPacket> conditionFalseData)
+    public void Fit(List<ChannelsDataPacketFlattenedLabeled> labeledData)
     {
-        this._dataSplit = this.LoadAndPrepareInMemoryData(conditionTrueData, conditionFalseData);
+        this._dataSplit = this.LoadAndPrepareInMemoryData(labeledData);
         var dataProcessPipeline = this.BuildDataProcessingPipelineForEeg();
         var trainingPipeline = dataProcessPipeline
                               .Append(this._model)
@@ -153,52 +153,10 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
     }
 
     private DataOperationsCatalog.TrainTestData LoadAndPrepareInMemoryData(
-        List<ChannelsDataPacket> channelsDataPacketsTrue,
-        List<ChannelsDataPacket> channelsDataPacketsFalse
+        List<ChannelsDataPacketFlattenedLabeled> channelsDataPackets
     )
     {
-        var flattnedChannelsDataPackets =
-            new List<ChannelsDataPacketFlattenedLabeled>(); //todo:consider savings the data in this format to prevent this overhead processing
-
-        foreach (var channelsDataPacket in channelsDataPacketsTrue)
-        {
-            flattnedChannelsDataPackets.Add(
-                new ChannelsDataPacketFlattenedLabeled
-                {
-                    TimeStamp = channelsDataPacket.TimeStamp,
-                    Channel1Volts = (float)channelsDataPacket.ChannelsVolts[0],
-                    Channel2Volts = (float)channelsDataPacket.ChannelsVolts[1],
-                    Channel3Volts = (float)channelsDataPacket.ChannelsVolts[2],
-                    Channel4Volts = (float)channelsDataPacket.ChannelsVolts[3],
-                    Channel5Volts = (float)channelsDataPacket.ChannelsVolts[4],
-                    Channel6Volts = (float)channelsDataPacket.ChannelsVolts[5],
-                    Channel7Volts = (float)channelsDataPacket.ChannelsVolts[6],
-                    Channel8Volts = (float)channelsDataPacket.ChannelsVolts[7],
-                    Condition = 1
-                }
-            );
-        }
-
-        foreach (var channelsDataPacket in channelsDataPacketsFalse)
-        {
-            flattnedChannelsDataPackets.Add(
-                new ChannelsDataPacketFlattenedLabeled
-                {
-                    TimeStamp = channelsDataPacket.TimeStamp,
-                    Channel1Volts = (float)channelsDataPacket.ChannelsVolts[0],
-                    Channel2Volts = (float)channelsDataPacket.ChannelsVolts[1],
-                    Channel3Volts = (float)channelsDataPacket.ChannelsVolts[2],
-                    Channel4Volts = (float)channelsDataPacket.ChannelsVolts[3],
-                    Channel5Volts = (float)channelsDataPacket.ChannelsVolts[4],
-                    Channel6Volts = (float)channelsDataPacket.ChannelsVolts[5],
-                    Channel7Volts = (float)channelsDataPacket.ChannelsVolts[6],
-                    Channel8Volts = (float)channelsDataPacket.ChannelsVolts[7],
-                    Condition = 0
-                }
-            );
-        }
-
-        var trainingDataView2 = this.MlContext.Data.LoadFromEnumerable(flattnedChannelsDataPackets);
+        var trainingDataView2 = this.MlContext.Data.LoadFromEnumerable(channelsDataPackets);
 
         //var trainingDataView = this.MlContext.Data.LoadFromTextFile<PalmerPenguinsData>(trainingFileName, hasHeader: true, separatorChar: ',');
 

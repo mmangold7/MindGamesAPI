@@ -12,7 +12,7 @@ public interface ITrainerBase
 
     void Fit(string trainingFileName);
 
-    void Fit(List<ChannelsDataPacket> conditionTrueData, List<ChannelsDataPacket> conditionFalseData);
+    void Fit(List<ChannelsDataPacketFlattenedLabeled> labeledData);
 
     void Save();
 }
