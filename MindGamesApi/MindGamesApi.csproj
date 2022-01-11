@@ -8,15 +8,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Jypyter Notebooks\**" />
+    <Content Remove="Jypyter Notebooks\**" />
+    <EmbeddedResource Remove="Jypyter Notebooks\**" />
+    <None Remove="Jypyter Notebooks\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CsvHelper" Version="27.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.1.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.13" />
     <PackageReference Include="pythonnet_netstandard_py37_win" Version="2.5.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Jypyter Notebooks\" />
   </ItemGroup>
 
 
