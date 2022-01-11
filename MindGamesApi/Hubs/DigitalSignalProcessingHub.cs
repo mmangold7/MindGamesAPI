@@ -300,14 +300,16 @@ public class DigitalSignalProcessingHub : Hub
         return result;
     }
 
-    public void TrainAndEvaluateEegClassifier(string blobbedChannelsData, string pipelineTypeName)
+    public void TrainAndEvaluateEegClassifier(string blobbedChannelsData)
     {
         var channelsData = JsonConvert.DeserializeObject<List<ChannelsDataPacketFlattenedLabeled>>(blobbedChannelsData);
 
-        var pipeline = (MultiClassifierPipeline)Activator.CreateInstance(
-            Type.GetType(pipelineTypeName),
-            channelsData
-        );
+        //var pipeline = (MultiClassifierPipeline)Activator.CreateInstance(
+        //    Type.GetType(pipelineTypeName),
+        //    channelsData
+        //);
+
+        var pipeline = new MultiClassifierPipeline(channelsData);
 
         pipeline.Run();
     }

@@ -37,7 +37,7 @@ public class PenguinPipeline : IPipeline
         Debug.WriteLine($"{trainer.Name}");
         Debug.WriteLine("*******************************");
 
-        trainer.Fit("Trainer\\penguins.csv");
+        trainer.Fit("Training\\Trainer\\penguins.csv");
 
         var modelMetrics = trainer.Evaluate();
 
