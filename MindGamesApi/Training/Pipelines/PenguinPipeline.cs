@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using MindGamesApi.Hubs;
 using MindGamesApi.Training.Trainer;
 
 namespace MindGamesApi.Training.Pipelines;
 
 public class PenguinPipeline : IPipeline
 {
+    private readonly DigitalSignalProcessingHub hub;
+
+    public PenguinPipeline(DigitalSignalProcessingHub hub) => this.hub = hub;
+
     public void Run()
     {
         var newSample = new PalmerPenguinsData
@@ -28,20 +32,20 @@ public class PenguinPipeline : IPipeline
             new SdcaNonCalibratedTrainer()
         };
 
-        trainers.ForEach(t => TrainEvaluatePredict(t, newSample));
+        trainers.ForEach(t => this.TrainEvaluatePredict(t, newSample));
     }
 
-    private static void TrainEvaluatePredict(ITrainerBase trainer, PalmerPenguinsData newSample)
+    private void TrainEvaluatePredict(ITrainerBase trainer, PalmerPenguinsData newSample)
     {
-        Debug.WriteLine("*******************************");
-        Debug.WriteLine($"{trainer.Name}");
-        Debug.WriteLine("*******************************");
+        this.hub.DebugMessageClient("*******************************");
+        this.hub.DebugMessageClient($"{trainer.Name}");
+        this.hub.DebugMessageClient("*******************************");
 
         trainer.Fit("Training\\Trainer\\penguins.csv");
 
         var modelMetrics = trainer.Evaluate();
 
-        Debug.WriteLine(
+        this.hub.DebugMessageClient(
             $"Macro Accuracy: {modelMetrics.MacroAccuracy:#.##}{Environment.NewLine}" +
             $"Micro Accuracy: {modelMetrics.MicroAccuracy:#.##}{Environment.NewLine}" +
             $"Log Loss: {modelMetrics.LogLoss:#.##}{Environment.NewLine}" +
@@ -52,8 +56,8 @@ public class PenguinPipeline : IPipeline
 
         var predictor = new Predictor();
         var prediction = predictor.Predict(newSample);
-        Debug.WriteLine("------------------------------");
-        Debug.WriteLine($"Prediction: {prediction.PredictedLabel:#.##}");
-        Debug.WriteLine("------------------------------");
+        this.hub.DebugMessageClient("------------------------------");
+        this.hub.DebugMessageClient($"Prediction: {prediction.PredictedLabel:#.##}");
+        this.hub.DebugMessageClient("------------------------------");
     }
 }

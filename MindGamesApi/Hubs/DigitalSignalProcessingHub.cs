@@ -17,7 +17,7 @@ using Python.Runtime;
 
 namespace MindGamesApi.Hubs;
 
-public class DigitalSignalProcessingHub : Hub
+public class DigitalSignalProcessingHub : Hub //<IDigitalSignalProcessingHub>
 {
     public async Task<PredictionResult> ContinuousWaveletTransformMultiChannel(List<List<ChannelDataPacket>> channelsData, bool returnData)
     {
@@ -224,6 +224,11 @@ public class DigitalSignalProcessingHub : Hub
         };
     }
 
+    public void DebugMessageClient(string message)
+    {
+        var client = this.Clients.Client(this.Context.ConnectionId).SendAsync("PipelineDebugMessage", message);
+    }
+
     public async Task<double[][]> FastFourierTransform(List<List<ChannelDataPacket>> allChannelData)
     {
         using (Py.GIL())
@@ -309,14 +314,14 @@ public class DigitalSignalProcessingHub : Hub
         //    channelsData
         //);
 
-        var pipeline = new MultiClassifierPipeline(channelsData);
+        var pipeline = new MultiClassifierPipeline(channelsData, this);
 
         pipeline.Run();
     }
 
     public void TrainAndEvaluatePenguinClassifier()
     {
-        var test = new PenguinPipeline();
+        var test = new PenguinPipeline(this);
         test.Run();
     }
 }

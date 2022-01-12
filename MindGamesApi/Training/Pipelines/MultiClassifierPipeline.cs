@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.AspNet.SignalR;
+using MindGamesApi.Hubs;
 using MindGamesApi.Models;
 using MindGamesApi.Training.Trainer;
 
@@ -10,8 +12,13 @@ namespace MindGamesApi.Training.Pipelines;
 public class MultiClassifierPipeline : BasePipeline
 {
     private readonly List<ChannelsDataPacketFlattenedLabeled> labeledData;
+    private DigitalSignalProcessingHub hub;
 
-    public MultiClassifierPipeline(List<ChannelsDataPacketFlattenedLabeled> labeledData) => this.labeledData = labeledData;
+    public MultiClassifierPipeline(List<ChannelsDataPacketFlattenedLabeled> labeledData, DigitalSignalProcessingHub hub)
+    {
+        this.labeledData = labeledData;
+        this.hub = hub;
+    } 
 
     public override void Run()
     {
@@ -27,17 +34,17 @@ public class MultiClassifierPipeline : BasePipeline
         trainers.ForEach(t => TrainEvaluatePredict(t, this.labeledData));
     }
 
-    private static void TrainEvaluatePredict(ITrainerBase trainer, List<ChannelsDataPacketFlattenedLabeled> labeledData)
+    private void TrainEvaluatePredict(ITrainerBase trainer, List<ChannelsDataPacketFlattenedLabeled> labeledData)
     {
-        Debug.WriteLine("*******************************");
-        Debug.WriteLine($"{trainer.Name}");
-        Debug.WriteLine("*******************************");
+        this.hub.DebugMessageClient("*******************************");
+        this.hub.DebugMessageClient($"{trainer.Name}");
+        this.hub.DebugMessageClient("*******************************");
 
         trainer.Fit(labeledData);
 
         var modelMetrics = trainer.Evaluate();
 
-        Debug.WriteLine(
+        this.hub.DebugMessageClient(
             $"Macro Accuracy: {modelMetrics.MacroAccuracy:#.##}{Environment.NewLine}" +
             $"Micro Accuracy: {modelMetrics.MicroAccuracy:#.##}{Environment.NewLine}" +
             $"Log Loss: {modelMetrics.LogLoss:#.##}{Environment.NewLine}" +
@@ -48,8 +55,8 @@ public class MultiClassifierPipeline : BasePipeline
 
         var predictor = new Predictor();
         var prediction = predictor.Predict(labeledData.First());
-        Debug.WriteLine("------------------------------");
-        Debug.WriteLine($"Prediction: {prediction.PredictedLabel:#.##}");
-        Debug.WriteLine("------------------------------");
+        this.hub.DebugMessageClient("------------------------------");
+        this.hub.DebugMessageClient($"Prediction: {prediction.PredictedLabel:#.##}");
+        this.hub.DebugMessageClient("------------------------------");
     }
 }
