@@ -224,7 +224,7 @@ public class DigitalSignalProcessingHub : Hub //<IDigitalSignalProcessingHub>
         };
     }
 
-    public void DebugMessageClient(string message)
+    public void DebugMessageClient(string message) //todo:overload this to have a debugwrteline that does the newline for you
     {
         var client = this.Clients.Client(this.Context.ConnectionId).SendAsync("PipelineDebugMessage", message);
     }
@@ -314,7 +314,9 @@ public class DigitalSignalProcessingHub : Hub //<IDigitalSignalProcessingHub>
         //    channelsData
         //);
 
-        var pipeline = new MultiClassifierPipeline(channelsData, this);
+        var dataGroupedByLabel = channelsData.GroupBy(cd => cd.Label).Select(g => g.ToList()).ToArray();
+
+        var pipeline = new MultiClassifierPipeline(this, dataGroupedByLabel);
 
         pipeline.Run();
     }

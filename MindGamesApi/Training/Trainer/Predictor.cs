@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.ML;
 using MindGamesApi.Models;
@@ -29,11 +30,11 @@ public class Predictor
         return predictionEngine.Predict(newSample);
     }
 
-    public EyesClosedPrediction Predict(ChannelsDataPacketFlattenedLabeled timePeriodData)
+    public MindPrediction Predict(List<ChannelsDataPacketFlattenedLabeled> timePeriodData)
     {
         this.LoadModel();
 
-        var predictionEngine = this._mlContext.Model.CreatePredictionEngine<ChannelsDataPacketFlattenedLabeled, EyesClosedPrediction>(this._model);
+        var predictionEngine = this._mlContext.Model.CreatePredictionEngine<List<ChannelsDataPacketFlattenedLabeled>, MindPrediction>(this._model);
 
         return predictionEngine.Predict(timePeriodData);
     }

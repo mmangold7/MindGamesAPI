@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.ML.Data;
+using MindGamesApi.Hubs;
 using MindGamesApi.Models;
 
 namespace MindGamesApi.Training.Trainer;
@@ -12,7 +13,7 @@ public interface ITrainerBase
 
     void Fit(string trainingFileName);
 
-    void Fit(List<ChannelsDataPacketFlattenedLabeled> labeledData);
+    void Fit(DigitalSignalProcessingHub hub, List<BinnedTransformedDataPacketsResult> labeledData);
 
     void Save();
 }

@@ -5,6 +5,7 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms;
+using MindGamesApi.Hubs;
 using MindGamesApi.Models;
 
 namespace MindGamesApi.Training.Trainer;
@@ -68,10 +69,16 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
         return this.MlContext.MulticlassClassification.Evaluate(testSetTransform);
     }
 
-    public void Fit(List<ChannelsDataPacketFlattenedLabeled> labeledData)
+    public void Fit(DigitalSignalProcessingHub hub, List<BinnedTransformedDataPacketsResult> labeledData)
     {
         this._dataSplit = this.LoadAndPrepareInMemoryData(labeledData);
+
+        hub.DebugMessageClient($"Split data into train and test sets{Environment.NewLine}");
+
         var dataProcessPipeline = this.BuildDataProcessingPipelineForEeg();
+
+        hub.DebugMessageClient($"Featurized frequency data for ML parameters{Environment.NewLine}");
+
         var trainingPipeline = dataProcessPipeline
                               .Append(this._model)
                               .Append(this.MlContext.Transforms.Conversion.MapKeyToValue("PredictedLabel"));
@@ -113,20 +120,52 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
     {
         var dataProcessPipeline = this.MlContext
                                       .Transforms.Conversion.MapValueToKey(
-                                           inputColumnName: nameof(ChannelsDataPacketFlattenedLabeled.Label),
+                                           inputColumnName: nameof(BinnedTransformedDataPacketsResult.Label),
                                            outputColumnName: "Label"
                                        )
                                       .Append(
                                            this.MlContext.Transforms.Concatenate(
-                                               "Features",
-                                               nameof(ChannelsDataPacketFlattenedLabeled.Channel1Volts),
-                                               nameof(ChannelsDataPacketFlattenedLabeled.Channel2Volts),
-                                               nameof(ChannelsDataPacketFlattenedLabeled.Channel3Volts),
-                                               nameof(ChannelsDataPacketFlattenedLabeled.Channel4Volts),
-                                               nameof(ChannelsDataPacketFlattenedLabeled.Channel5Volts),
-                                               nameof(ChannelsDataPacketFlattenedLabeled.Channel6Volts),
-                                               nameof(ChannelsDataPacketFlattenedLabeled.Channel7Volts),
-                                               nameof(ChannelsDataPacketFlattenedLabeled.Channel8Volts)
+                                               "Features", //todo probalby don't concat all these? idk lol
+                                               nameof(BinnedTransformedDataPacketsResult.Channel1AlphaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel2AlphaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel3AlphaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel4AlphaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel5AlphaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel6AlphaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel7AlphaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel8AlphaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel1BetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel2BetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel3BetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel4BetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel5BetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel6BetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel7BetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel8BetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel1GammaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel2GammaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel3GammaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel4GammaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel5GammaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel6GammaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel7GammaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel8GammaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel1DeltaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel2DeltaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel3DeltaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel4DeltaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel5DeltaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel6DeltaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel7DeltaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel8DeltaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel1ThetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel2ThetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel3ThetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel4ThetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel5ThetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel6ThetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel7ThetaWaveMagnitude),
+                                               nameof(BinnedTransformedDataPacketsResult.Channel8ThetaWaveMagnitude)
                                            )
                                        )
                                       .Append(
@@ -153,7 +192,7 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
     }
 
     private DataOperationsCatalog.TrainTestData LoadAndPrepareInMemoryData(
-        List<ChannelsDataPacketFlattenedLabeled> channelsDataPackets
+        List<BinnedTransformedDataPacketsResult> channelsDataPackets
     )
     {
         var trainingDataView2 = this.MlContext.Data.LoadFromEnumerable(channelsDataPackets);
