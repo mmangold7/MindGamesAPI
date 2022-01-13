@@ -11,7 +11,7 @@ public class PenguinPipeline : IPipeline
 
     public PenguinPipeline(DigitalSignalProcessingHub hub) => this.hub = hub;
 
-    public void Run()
+    public string Run()
     {
         var newSample = new PalmerPenguinsData
         {
@@ -25,14 +25,16 @@ public class PenguinPipeline : IPipeline
 
         var trainers = new List<ITrainerBase>
         {
-            new LbfgsMaximumEntropyTrainer(),
-            new NaiveBayesTrainer(),
-            new OneVersusAllTrainer(),
-            new SdcaMaximumEntropyTrainer(),
-            new SdcaNonCalibratedTrainer()
+            new LbfgsMaximumEntropyTrainer("penguin"),
+            new NaiveBayesTrainer("penguin"),
+            new OneVersusAllTrainer("penguin"),
+            new SdcaMaximumEntropyTrainer("penguin"),
+            new SdcaNonCalibratedTrainer("penguin")
         };
 
         trainers.ForEach(t => this.TrainEvaluatePredict(t, newSample));
+
+        return "penguin";
     }
 
     private void TrainEvaluatePredict(ITrainerBase trainer, PalmerPenguinsData newSample)
@@ -54,7 +56,7 @@ public class PenguinPipeline : IPipeline
 
         trainer.Save();
 
-        var predictor = new Predictor();
+        var predictor = new Predictor("penguin");
         var prediction = predictor.Predict(newSample);
         this.hub.DebugMessageClient("------------------------------");
         this.hub.DebugMessageClient($"Prediction: {prediction.PredictedLabel:#.##}");

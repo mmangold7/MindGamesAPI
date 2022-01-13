@@ -5,7 +5,7 @@ namespace MindGamesApi.Training.Trainer;
 
 public class LbfgsMaximumEntropyTrainer : TrainerBase<MaximumEntropyModelParameters>
 {
-    public LbfgsMaximumEntropyTrainer()
+    public LbfgsMaximumEntropyTrainer(string modelName) : base($"{modelName}_{nameof(LbfgsMaximumEntropyTrainer)}")
     {
         this.Name = "LBFGS Maximum Entropy";
         this._model = this.MlContext.MulticlassClassification.Trainers
@@ -15,7 +15,7 @@ public class LbfgsMaximumEntropyTrainer : TrainerBase<MaximumEntropyModelParamet
 
 public class NaiveBayesTrainer : TrainerBase<NaiveBayesMulticlassModelParameters>
 {
-    public NaiveBayesTrainer()
+    public NaiveBayesTrainer(string modelName) : base($"{modelName}_{nameof(NaiveBayesTrainer)}")
     {
         this.Name = "Naive Bayes";
         this._model = this.MlContext.MulticlassClassification.Trainers
@@ -25,7 +25,7 @@ public class NaiveBayesTrainer : TrainerBase<NaiveBayesMulticlassModelParameters
 
 public class OneVersusAllTrainer : TrainerBase<OneVersusAllModelParameters>
 {
-    public OneVersusAllTrainer()
+    public OneVersusAllTrainer(string modelName) : base($"{modelName}_{nameof(OneVersusAllTrainer)}")
     {
         this.Name = "One Versus All";
         this._model = this.MlContext.MulticlassClassification.Trainers
@@ -35,7 +35,7 @@ public class OneVersusAllTrainer : TrainerBase<OneVersusAllModelParameters>
 
 public class SdcaMaximumEntropyTrainer : TrainerBase<MaximumEntropyModelParameters>
 {
-    public SdcaMaximumEntropyTrainer()
+    public SdcaMaximumEntropyTrainer(string modelName) : base($"{modelName}_{nameof(SdcaMaximumEntropyTrainer)}")
     {
         this.Name = "Sdca Maximum Entropy";
         this._model = this.MlContext.MulticlassClassification.Trainers
@@ -45,7 +45,7 @@ public class SdcaMaximumEntropyTrainer : TrainerBase<MaximumEntropyModelParamete
 
 public class SdcaNonCalibratedTrainer : TrainerBase<LinearMulticlassModelParameters>
 {
-    public SdcaNonCalibratedTrainer()
+    public SdcaNonCalibratedTrainer(string modelName) : base($"{modelName}_{nameof(SdcaNonCalibratedTrainer)}")
     {
         this.Name = "Sdca NonCalibrated";
         this._model = this.MlContext.MulticlassClassification.Trainers

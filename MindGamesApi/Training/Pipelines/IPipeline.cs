@@ -2,5 +2,5 @@
 
 internal interface IPipeline
 {
-    void Run();
+    string Run();
 }

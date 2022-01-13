@@ -1,18 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
-namespace MindGamesApi.Models
+namespace MindGamesApi.Models;
+
+public class TrainedModel
 {
-    public class CwtInput
-    {
-        public string DataLabel { get; set; }
-        public List<ChannelDataPacket> Channel1Data { get; set; }
-        public List<ChannelDataPacket> Channel2Data { get; set; }
-        public List<ChannelDataPacket> Channel3Data { get; set; }
-        public List<ChannelDataPacket> Channel4Data { get; set; }
-        public List<ChannelDataPacket> Channel5Data { get; set; }
-        public List<ChannelDataPacket> Channel6Data { get; set; }
-        public List<ChannelDataPacket> Channel7Data { get; set; }
-        public List<ChannelDataPacket> Channel8Data { get; set; }
-        public int CwtChannelIndex { get; set; }
-    }
+    public string Description { get; set; }
+
+    public string Name { get; set; }
+
+    public string TrainedModelFileName { get; set; }
+
+    public Guid TrainedModelId { get; set; }
 }

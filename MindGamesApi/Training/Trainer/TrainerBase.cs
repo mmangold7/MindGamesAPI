@@ -24,9 +24,15 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
     protected ITrainerEstimator<MulticlassPredictionTransformer<TParameters>, TParameters> _model;
     protected ITransformer _trainedModel;
 
-    protected static string ModelPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "classification.mdl");
+    private string ModelName { get; set; }
 
-    protected TrainerBase() => this.MlContext = new MLContext(111);
+    protected string ModelPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"{this.ModelName}.mdl");
+
+    protected TrainerBase(string modelName)
+    {
+        this.ModelName = modelName;
+        this.MlContext = new MLContext(111);
+    }
 
     public string Name { get; protected set; }
 
@@ -55,7 +61,7 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
     /// </summary>
     public void Save()
     {
-        this.MlContext.Model.Save(this._trainedModel, this._dataSplit.TrainSet.Schema, ModelPath);
+        this.MlContext.Model.Save(this._trainedModel, this._dataSplit.TrainSet.Schema, this.ModelPath);
     }
 
     /// <summary>

@@ -4,8 +4,5 @@ namespace MindGamesApi.Training.Pipelines;
 
 public class BasePipeline : IPipeline
 {
-    public virtual void Run()
-    {
-        throw new NotImplementedException();
-    }
+    public virtual string Run() => throw new NotImplementedException();
 }
