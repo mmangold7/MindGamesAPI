@@ -1,11 +1,11 @@
 ﻿using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MindGamesApi.Hubs;
+using MindGamesApi.Services;
 
 namespace MindGamesApi;
 
@@ -25,16 +25,6 @@ public class Startup
                    Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine);
         Environment.SetEnvironmentVariable("PATH", path, EnvironmentVariableTarget.Process);
         Environment.SetEnvironmentVariable("PYTHONHOME", pathToPython, EnvironmentVariableTarget.Process);
-
-        //var lib = new[]
-        //{
-        //    @"C:\Users\mmang\<your python code is here>",
-        //    Path.Combine(pathToPython, "Lib"),
-        //    Path.Combine(pathToPython, "DLLs")
-
-        //};
-        //string paths = string.Join("; ", lib);
-        //Environment.SetEnvironmentVariable("PYTHONPATH", paths, EnvironmentVariableTarget.Process);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -51,15 +41,7 @@ public class Startup
 
         app.UseAuthorization();
 
-        //ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
-
-        app.UseEndpoints(
-            endpoints =>
-            {
-                endpoints.MapControllers();
-                //endpoints.MapHub<DigitalSignalProcessingHub>("/dsphub");
-            }
-        );
+        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
 
         app.UseSignalR(routes => { routes.MapHub<DigitalSignalProcessingHub>("/dsphub"); });
     }
@@ -72,10 +54,10 @@ public class Startup
             o =>
             {
                 o.EnableDetailedErrors = true;
-                o.MaximumReceiveMessageSize = 9999999; // bytes
-                //o.s
+                o.MaximumReceiveMessageSize = long.MaxValue;
             }
         );
         services.AddSingleton<DigitalSignalProcessingHub>();
+        services.AddSingleton<ModelTrainingService>();
     }
 }

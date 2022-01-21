@@ -7,13 +7,9 @@ namespace MindGamesApi.Training.Trainer;
 
 public interface ITrainerBase
 {
-    string Name { get; }
-
     MulticlassClassificationMetrics Evaluate();
 
-    void Fit(string trainingFileName);
+    bool Fit(DigitalSignalProcessingHub hub, List<LabeledFlattenedFeatures> labeledData, TrainingOptions trainingOptions);
 
-    void Fit(DigitalSignalProcessingHub hub, List<BinnedTransformedDataPacketsResult> labeledData);
-
-    void Save();
+    void Save(string filePath);
 }

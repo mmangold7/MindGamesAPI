@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 // 15Oct17 - 1.03.1 - Slight interoperability correction to V1.03, same results, different design pattern.
 //
 
-namespace MindGamesApi.Training.Trainer;
+namespace MindGamesApi.Helpers;
 
 #region =====[ DFT Core Class ]======================================================
 
