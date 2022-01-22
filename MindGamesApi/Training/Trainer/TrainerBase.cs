@@ -113,7 +113,15 @@ public abstract class TrainerBase<TParameters> : ITrainerBase
         List<LabeledFlattenedFeatures> channelsDataPackets
     )
     {
-        var trainingDataView2 = this.MlContext.Data.LoadFromEnumerable(channelsDataPackets);
+        //create a custom schema-definition that overrides the type for the Values field...  
+        var schemaDef = SchemaDefinition.Create(typeof(LabeledFlattenedFeatures));
+        schemaDef[nameof(LabeledFlattenedFeatures.Features)].ColumnType
+            = new VectorDataViewType(NumberDataViewType.Single, channelsDataPackets.First().Features.Length);
+
+        //use that schema definition when creating the training dataview  
+        var trainingDataView2 = this.MlContext.Data.LoadFromEnumerable(channelsDataPackets, schemaDef);
+
+        //var trainingDataView2 = this.MlContext.Data.LoadFromEnumerable(channelsDataPackets);
 
         return this.MlContext.Data.TrainTestSplit(trainingDataView2, 0.3);
     }

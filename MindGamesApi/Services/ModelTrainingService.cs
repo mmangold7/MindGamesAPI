@@ -29,17 +29,17 @@ public class ModelTrainingService
         return Task.FromResult(prediction.PredictedLabel);
     }
 
-    public Task<List<MultiClassifierModel>> TrainEegMultiClassifiers(string blobbedChannelsData, string sharedModelId, TrainingOptions options)
+    public Task<List<MultiClassifierModel>> TrainEegMultiClassifiers(string blobbedChannelsData, TrainingOptions options)
     {
         var newlyTrainedMultiClassifierModels = new List<MultiClassifierModel>();
 
         if (options.HyperParametrize)
         {
             //double nextTimeIntervalInPacketsRootBaseTwo = 5;
-            double nextTimeIntervalInPacketsRootBaseTwo = 8;
+            double nextTimeIntervalInPacketsRootBaseTwo = 9;
 
             //while (nextTimeIntervalInPacketsRootBaseTwo <= 10)
-            while (nextTimeIntervalInPacketsRootBaseTwo <= 10)
+            while (nextTimeIntervalInPacketsRootBaseTwo <= 9)
             {
                 var timeIntervalInPackets = (int)Math.Pow(2.0, nextTimeIntervalInPacketsRootBaseTwo);
 
@@ -58,12 +58,12 @@ public class ModelTrainingService
                 var trainers = new List<ITrainerBase>
                 {
                     new LbfgsMaximumEntropyTrainer(),
-                    new NaiveBayesTrainer(),
+                    //new NaiveBayesTrainer(),
                     new OneVersusAllTrainer(),
                     new SdcaMaximumEntropyTrainer()
                 };
 
-                newlyTrainedMultiClassifierModels.AddRange(trainers.Select(trainer => this.TrainSingleModel(trainer, sharedModelId, dataBinned, nextOptions)));
+                newlyTrainedMultiClassifierModels.AddRange(trainers.Select(trainer => this.TrainSingleModel(trainer, dataBinned, nextOptions)));
 
                 nextTimeIntervalInPacketsRootBaseTwo++;
             }
@@ -84,7 +84,7 @@ public class ModelTrainingService
                 new SdcaMaximumEntropyTrainer()
             };
 
-            newlyTrainedMultiClassifierModels.AddRange(trainers.Select(trainer => this.TrainSingleModel(trainer, sharedModelId, dataBinned, options)));
+            newlyTrainedMultiClassifierModels.AddRange(trainers.Select(trainer => this.TrainSingleModel(trainer, dataBinned, options)));
         }
 
         this.Hub.DebugMessageClient($"Hyper-parametrized models:{Environment.NewLine}");
@@ -99,9 +99,11 @@ public class ModelTrainingService
         return Task.FromResult(newlyTrainedMultiClassifierModels);
     }
 
-    private MultiClassifierModel TrainSingleModel(ITrainerBase trainer, string modelId, List<LabeledFlattenedFeatures> inputData, TrainingOptions options)
+    private MultiClassifierModel TrainSingleModel(ITrainerBase trainer, List<LabeledFlattenedFeatures> inputData, TrainingOptions options)
     {
-        this.Hub.DebugMessageClient($"Trainer: {nameof(trainer)}{Environment.NewLine}");
+        var modelId = Guid.NewGuid().ToString();
+
+        this.Hub.DebugMessageClient($"Trainer: {trainer.GetType().Name}{Environment.NewLine}");
         trainer.Fit(this.Hub, inputData, options);
         this.Hub.DebugMessageClient($"Completed model training. Beginning evaluation.{Environment.NewLine}");
         var modelMetrics = trainer.Evaluate();
@@ -114,11 +116,11 @@ public class ModelTrainingService
         );
 
         var uniqueModelName =
-            $"{modelId}_{nameof(trainer)}_{options.TimeIntervalInPackets}_{options.NumberOfFrequencyBins}_{options.StartOfFrequencyRange}_{options.EndOfFrequencyRange}";
+            $"{modelId}_{trainer.GetType().Name}_{options.TimeIntervalInPackets}_{options.NumberOfFrequencyBins}_{options.StartOfFrequencyRange}_{options.EndOfFrequencyRange}";
         var modelPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"{uniqueModelName}.mdl");
         trainer.Save(modelPath);
 
-        return new MultiClassifierModel
+        return new MultiClassifierModel(Guid.Parse(modelId))
         {
             ModelName = uniqueModelName,
             FilePath = modelPath,

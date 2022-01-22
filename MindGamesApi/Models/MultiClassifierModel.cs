@@ -1,6 +1,8 @@
-﻿namespace MindGamesApi.Models;
+﻿using System;
 
-public class MultiClassifierModel
+namespace MindGamesApi.Models;
+
+public class MultiClassifierModel : BaseEntity
 {
     public string FilePath { get; set; }
 
@@ -15,4 +17,6 @@ public class MultiClassifierModel
     public string ModelName { get; set; }
 
     public TrainingOptions TrainingOptions { get; set; }
+
+    public MultiClassifierModel(Guid id) : base(id) { }
 }

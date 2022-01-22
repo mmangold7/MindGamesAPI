@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Microsoft.ML;
+using Microsoft.ML.Data;
 using MindGamesApi.Models;
 
 namespace MindGamesApi.Training.Trainer;
@@ -25,7 +26,11 @@ public class Predictor
     {
         this.LoadModel();
 
-        var predictionEngine = this.mlContext.Model.CreatePredictionEngine<LabeledFlattenedFeatures, MindPrediction>(this.model);
+        var schemaDef = SchemaDefinition.Create(typeof(LabeledFlattenedFeatures));
+        schemaDef[nameof(LabeledFlattenedFeatures.Features)].ColumnType
+            = new VectorDataViewType(NumberDataViewType.Single, timePeriodData.Features.Length);
+
+        var predictionEngine = this.mlContext.Model.CreatePredictionEngine<LabeledFlattenedFeatures, MindPrediction>(this.model, true, schemaDef);
 
         return predictionEngine.Predict(timePeriodData);
     }

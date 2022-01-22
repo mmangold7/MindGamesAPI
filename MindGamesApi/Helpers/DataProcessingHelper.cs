@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.ML.Data;
 using MindGamesApi.Models;
 using MindGamesApi.Services.CWT;
 
@@ -230,24 +231,31 @@ public static class DataProcessingHelper
                 var channelsDataPackets = UnFlattenChannelsData(timePeriodPackets);
 
                 var timePeriodResult = new LabeledFlattenedFeatures { Label = labelGroup.First().Label };
+                float[] justValues;
 
                 switch (transformationType)
                 {
                     case TransformationType.None:
 
                         timePeriodResult.NamedFeatures = PrepareTimeData(channelsDataPackets, trainingOptions);
+                        justValues = timePeriodResult.NamedFeatures.Select(nf => nf.Value).ToArray();
+                        timePeriodResult.Features = new VBuffer<float>(justValues.Length, justValues);
 
                         break;
 
                     case TransformationType.Fft:
 
                         timePeriodResult.NamedFeatures = FftTimePeriod(channelsDataPackets, trainingOptions);
+                        justValues = timePeriodResult.NamedFeatures.Select(nf => nf.Value).ToArray();
+                        timePeriodResult.Features = new VBuffer<float>(justValues.Length, justValues);
 
                         break;
 
                     case TransformationType.Cwt:
 
                         timePeriodResult.NamedFeatures = CwtTimePeriod(channelsDataPackets, trainingOptions);
+                        justValues = timePeriodResult.NamedFeatures.Select(nf => nf.Value).ToArray();
+                        timePeriodResult.Features = new VBuffer<float>(justValues.Length, justValues);
 
                         break;
                 }
@@ -405,7 +413,8 @@ public static class DataProcessingHelper
                     numberOfCustomBins = fftResults.Length;
                 }
 
-                var binWidthInHertz = (endFrequency - startFrequency) / numberOfCustomBins;
+                var binWidthInHertz = useAllFrequencies ? (double)fftResults.Length / numberOfCustomBins : (endFrequency - startFrequency) / numberOfCustomBins;
+                //var binWidthInHertz = (endFrequency - startFrequency) / numberOfCustomBins;
                 double binsSum = 0;
                 var arrayWidthOfBins = (int)Math.Ceiling(binWidthInHertz / hertzPerBin);
 

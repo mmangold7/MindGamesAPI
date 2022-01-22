@@ -26,6 +26,6 @@ public class DigitalSignalProcessingHub : Hub
     public Task<string> PredictEegClassUsingMultiClassifier(List<ChannelsDataPacketFlattenedLabeled> channelsData, string modelPath, TrainingOptions options) =>
         this.modelTrainingService.PredictClass(channelsData, modelPath, options);
 
-    public Task<List<MultiClassifierModel>> TrainEegMultiClassifiers(string blobbedChannelsData, string modelId, TrainingOptions options) =>
-        this.modelTrainingService.TrainEegMultiClassifiers(blobbedChannelsData, modelId, options);
+    public Task<List<MultiClassifierModel>> TrainEegMultiClassifiers(string blobbedChannelsData, TrainingOptions options) =>
+        this.modelTrainingService.TrainEegMultiClassifiers(blobbedChannelsData, options);
 }
