@@ -5,6 +5,7 @@
     <UserSecretsId>fa00d835-bdbe-4cce-91be-679f241be1fc</UserSecretsId>
     <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
     <Platforms>AnyCPU;x86</Platforms>
+    <StartupObject>MindGamesApi.Program</StartupObject>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
