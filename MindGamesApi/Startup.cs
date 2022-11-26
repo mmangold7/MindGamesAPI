@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -41,9 +42,22 @@ public class Startup
 
         app.UseAuthorization();
 
-        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+            endpoints.MapHub<DigitalSignalProcessingHub>("/dsphub");
+        });
 
-        app.UseSignalR(routes => { routes.MapHub<DigitalSignalProcessingHub>("/dsphub"); });
+        var development = false;
+
+#if (DEBUG)
+        development = true;
+#endif
+
+        ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) =>
+        {
+            return true;
+        };
     }
 
     // This method gets called by the runtime. Use this method to add services to the container.
