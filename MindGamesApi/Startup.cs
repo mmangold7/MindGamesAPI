@@ -12,7 +12,7 @@ namespace MindGamesApi;
 
 public class Startup
 {
-    private static readonly string pythonPath1 = @"C:\Users\mmang\AppData\Local\Programs\Python\Python37";
+    private static readonly string pythonPath1 = @"C:\Users\mmang\AppData\Local\Programs\Python\Python366";
 
     public IConfiguration Configuration { get; }
 
