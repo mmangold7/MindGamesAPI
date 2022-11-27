@@ -12,11 +12,9 @@ namespace MindGamesApi;
 
 public class Startup
 {
-    //private static readonly string pythonPath1 = @"C:\Users\mmang\AppData\Local\Programs\Python\Python366";
-
-
+    //private static readonly string pythonPath1 = @"C:\Users\mmang\AppData\Local\Programs\Python\Python37";
     private static readonly string applicationPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-    private static readonly string pythonPath1 = $"{applicationPath}/Python37";
+    private static readonly string pythonPath1 = applicationPath;
 
     public IConfiguration Configuration { get; }
 
